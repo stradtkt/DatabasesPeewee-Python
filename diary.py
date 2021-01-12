@@ -1,5 +1,6 @@
 import datetime
 import sys
+import os
 from collections import OrderedDict
 from peewee import *
 
@@ -16,6 +17,11 @@ class Entry(Model):
 def initialize():
     db.connect()
     db.create_tables([Entry], safe=True)
+
+
+def clear():
+    os.system('clear')
+
 
 
 def menu_loop():
@@ -39,26 +45,41 @@ def add_entry():
             print("Saved successfully")
 
 
-def view_entries():
+def view_entries(search_query=None):
     """View entries"""
     entries = Entry.select().order_by(Entry.timestamp.desc())
+    if search_query:
+        entries = entries.where(Entry.content.contains(search_query))
     for entry in entries:
         timestamp = entry.timestamp.strftime("%A %B %d, %Y %H:%M%p")
         print(timestamp)
         print("="*len(timestamp))
         print(entry.content)
-        print("N) next entry")
+        print("n) next entry")
+        print("d) delete entry")
         print("q) return to the main menu")
-        next_action = input('Action: [Nq] ').lower().strip()
+        next_action = input('Action: [Ndq] ').lower().strip()
         if next_action == 'q':
             break
+        elif next_action == 'd':
+            delete_entry(entry)
 
-def delete_entry():
+
+def search_entries():
+    """Search entries for a string"""
+    view_entries(input('Search query:  '))
+        
+    
+def delete_entry(entry):
     """Delete an entry"""
+    if input('Are you sure? [yN]').lower == 'y':
+        entry.delete_instance()
+        print('Entry deleted!')
 
 menu = OrderedDict([
     ('a', add_entry),
-    ('v', view_entries)
+    ('v', view_entries),
+    ('s', search_entries),
 ])
 
 if __name__ == '__main__':
